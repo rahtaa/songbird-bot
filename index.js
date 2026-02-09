@@ -30,13 +30,13 @@ client.on("messageCreate", async (message) => {
     if (!message.content.toLowerCase().includes("songbird")) return;
 
     const messages = [
-      { role: "system", content: SYSTEM_PROMPT },
+      { role: "system", content: persona },
       ...memory,
       { role: "user", content: message.content }
     ];
 
     const res = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
+      model: "gpt-4o",   // ← önemli
       messages,
       temperature: 0.6,
       max_tokens: 80
@@ -53,7 +53,7 @@ client.on("messageCreate", async (message) => {
     if (memory.length > 6) memory = memory.slice(-6);
 
   } catch (err) {
-    console.error(err);
+    console.error("OPENAI ERROR:", err?.response?.data || err.message);
     await message.reply("…sinyal gitti. Night City yine çöktü.");
   }
 });
