@@ -17,9 +17,7 @@ const openai = new OpenAI({
 });
 
 // ---- KARAKTER PROMPT (ENV'DEN) ----
-const SYSTEM_PROMPT =
-  process.env.SONGBIRD_PROMPT ||
-  "You are Songbird. Short, sarcastic, cyberpunk vibe. Max 2 sentences.";
+const persona = process.env.PERSONA;
 
 // ---- MİNİ HAFIZA (son 3 tur) ----
 let memory = [];
