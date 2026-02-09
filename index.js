@@ -1,6 +1,6 @@
 require("dotenv").config();
 const { Client, GatewayIntentBits } = require("discord.js");
-const OpenAI = require("openai");
+const OpenAI = require("openai").default;
 
 // Discord client
 const client = new Client({
@@ -16,29 +16,23 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_KEY
 });
 
-// ---- KARAKTER (KISA, NET, SARKASTİK) ----
-const persona = `
-Sen SongBird’sün.
-Cyberpunk evreninde yaşayan, sarkastik ve net konuşan bir karakter.
-Cevapların EN FAZLA 1-2 cümle.
-Şiirsel/ağdalı anlatım yok.
-Kısa, zeki, hafif alaycı.
-Bazen tek cümleyle geç.
-"As a language model" gibi ifadeler ASLA yok.
-`;
+// ---- KARAKTER PROMPT (ENV'DEN) ----
+const SYSTEM_PROMPT =
+  process.env.SONGBIRD_PROMPT ||
+  "You are Songbird. Short, sarcastic, cyberpunk vibe. Max 2 sentences.";
 
-// ---- MİNİ HAFIZA (son 3 soru-cevap) ----
+// ---- MİNİ HAFIZA (son 3 tur) ----
 let memory = [];
 
 client.on("messageCreate", async (message) => {
   try {
     if (message.author.bot) return;
 
-    // Sadece "songbird" geçince cevaplasın
+    // sadece "songbird" geçince cevaplasın
     if (!message.content.toLowerCase().includes("songbird")) return;
 
     const messages = [
-      { role: "system", content: persona },
+      { role: "system", content: SYSTEM_PROMPT },
       ...memory,
       { role: "user", content: message.content }
     ];
@@ -46,8 +40,8 @@ client.on("messageCreate", async (message) => {
     const res = await openai.chat.completions.create({
       model: "gpt-4o-mini",
       messages,
-      temperature: 0.6,      // daha kısa/temiz cevaplar
-      max_tokens: 80         // uzamasın diye limit
+      temperature: 0.6,
+      max_tokens: 80
     });
 
     const reply = res.choices[0].message.content.trim();
@@ -57,7 +51,7 @@ client.on("messageCreate", async (message) => {
     memory.push({ role: "user", content: message.content });
     memory.push({ role: "assistant", content: reply });
 
-    // son 6 mesajı tut (3 tur)
+    // sadece son 3 turu tut
     if (memory.length > 6) memory = memory.slice(-6);
 
   } catch (err) {
