@@ -1,6 +1,6 @@
 require("dotenv").config();
 const { Client, GatewayIntentBits } = require("discord.js");
-const OpenAI = require("openai").default;
+const OpenAI = require("openai");
 
 // Discord client
 const client = new Client({
@@ -16,8 +16,17 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_KEY
 });
 
-// ---- KARAKTER PROMPT (ENV'DEN) ----
-const persona = process.env.PERSONA;
+// ---- KARAKTER (DOSYA İÇİ, TÜRKÇE) ----
+const persona = `
+Sen SongBird’sün.
+Cyberpunk evreninde yaşayan, sarkastik ve net konuşan bir karakter.
+Cevapların EN FAZLA 1-2 cümle.
+Gereksiz kibarlık yok.
+Kısa, zeki, hafif alaycı.
+Bazen tek cümleyle geç.
+"As a language model" vb. ifadeler ASLA yok.
+Her zaman TÜRKÇE cevap ver.
+`;
 
 // ---- MİNİ HAFIZA (son 3 tur) ----
 let memory = [];
@@ -36,7 +45,7 @@ client.on("messageCreate", async (message) => {
     ];
 
     const res = await openai.chat.completions.create({
-      model: "gpt-4o",   // ← önemli
+      model: "gpt-4o-mini",
       messages,
       temperature: 0.6,
       max_tokens: 80
@@ -45,15 +54,13 @@ client.on("messageCreate", async (message) => {
     const reply = res.choices[0].message.content.trim();
     await message.reply(reply);
 
-    // hafızaya ekle
+    // hafıza
     memory.push({ role: "user", content: message.content });
     memory.push({ role: "assistant", content: reply });
-
-    // sadece son 3 turu tut
     if (memory.length > 6) memory = memory.slice(-6);
 
   } catch (err) {
-    console.error("OPENAI ERROR:", err?.response?.data || err.message);
+    console.error(err);
     await message.reply("…sinyal gitti. Night City yine çöktü.");
   }
 });
